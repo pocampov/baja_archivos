@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ProfilingTarget xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <StandaloneTarget>
+    <PythonInterpreter>
+      <Id>Global|PythonCore|3.10</Id>
+    </PythonInterpreter>
+    <WorkingDirectory>C:\Users\USER\AppData\Local\Programs\Python\Python310\Scripts2</WorkingDirectory>
+    <Script>C:\Users\USER\AppData\Local\Programs\Python\Python310\Scripts2\baja_archivos.py</Script>
+    <Arguments />
+  </StandaloneTarget>
+  <Reports />
+  <UseVTune>false</UseVTune>
+</ProfilingTarget>

@@ -1,0 +1,2 @@
+archivo_origen=C:/Users/USER/OneDrive/Documentos/Secretaria de Salud/Tablas para RIPSS/Prestadores_31-12-2022 geolocalizados.xlsx
+archivo_destino=C:/Users/USER/OneDrive/Documentos/Secretaria de Salud/RIPSS/RIPSS_16_07_23_Depurada_OK.xlsx

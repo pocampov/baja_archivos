@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33529.622
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Tablas_para_RIPSS", "Tablas_para_RIPSS.pyproj", "{14CDA2EA-9E67-4124-8908-F47F2517AD4D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{14CDA2EA-9E67-4124-8908-F47F2517AD4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14CDA2EA-9E67-4124-8908-F47F2517AD4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D60DA750-571D-4861-B457-015C23481C9E}
+	EndGlobalSection
+EndGlobal

@@ -12,7 +12,10 @@ import io
 import tkinter as tk
 import socket
 import threading
+import platform
+import psutil
 
+from tqdm import tqdm
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -24,8 +27,92 @@ from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from tkinter import PhotoImage
+from tkinter import ttk
+from tkinter import filedialog
+from urllib.parse import urljoin
+
+# === Parametros generales
+version = "1.0"
+download_url = "https://misejecutables.000webhostapp.com" # Ubicación de nuevas versiones
+# === Funciones para auto-actualizar el programa
+def copia_nueva_version():
+    # Si el archivo que se ejecuta se llama nueva_version, copia este archivo en baja_archivos
+    if os.path.basename(sys.argv[0]) == "nueva_version.exe":
+        try:
+            os.replace("nueva_version.exe", "baja_archivos.exe")
+        except Exception as e:
+            print("Error al reemplazar el archivo:", e)
+            sys.exit(1)
+        print("¡Actualización completada! Reiniciando el programa...")
+        # Reiniciar el programa con el nombre original
+        os.system("start baja_archivos.exe")
+        sys.exit()
 
 
+def download_latest_version(url, filename):
+    url = urljoin(url, filename)
+    try:
+        response = requests.get(url)
+        print(response.text)
+        return response.text
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+    except Exception as e:
+        return 0
+
+def restart_program():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
+def extrae_ultima_version(url, filename):
+    new_filename = "nueva_version.exe"
+    with open(new_filename, 'wb') as f:
+        url = urljoin(url, filename)
+        print(url)
+        response = requests.get(url, stream=True)
+        total_length = response.headers.get('content-length')
+        print(total_length)
+        if total_length is None:
+            f.write(response.content)
+        else:
+            dl = 0
+            total_length = int(total_length)
+            print("Directorio de trabajo actual:", os.getcwd())
+            progress_bar = tqdm(total=total_length, unit='B', unit_scale=True, ncols=80, miniters=1)
+            for data in response.iter_content(chunk_size=4096):
+                dl += len(data)
+                f.write(data)
+                progress_bar.update(len(data))
+            progress_bar.close()
+def boton_actualizar():
+    boton_actualiza = tk.Button(root, text="Actualizar versiónn", command=actualiza)
+    boton_actualiza.grid(row=4, column=1,columnspan=1, pady=1)
+def update_program():
+    global version, download_url
+    current_version = version  # Obtener la versión actual de tu programa
+    last_version = download_latest_version(download_url,"version.txt")
+    print("Version actual: "+ current_version + " Ultima versión: " + last_version)
+    if current_version < last_version:
+        boton_actualizar()
+        return
+    else:
+        print("No hay actualizaciones disponibles.")
+def actualiza():
+        # Descargar el nuevo ejecutable
+        global download_url
+        new_executable = "baja_archivos.exe"
+        extrae_ultima_version(download_url, new_executable)
+
+        # Cerrar el archivo en ejecución ("baja_archivos.exe")
+        # Reiniciar el programa con el nombre original
+        print("¡Archivo descargao! Reiniciando el programa...")
+        os.system("start nueva_version.exe")
+        sys.exit()
+
+# === Fin funciones de auto-actualización
+def listar_archivos_R(carpeta):
+    archivos_r = [archivo for archivo in os.listdir(carpeta) if archivo.endswith('.R')]
+    return archivos_r
 def copia_archivo(origen, destino):
     # Toma el archivo de download mas nuevo y lo copia destino quitandole el (##) del final
     # Obtener una lista de todos los archivos en la carpeta "origen"
@@ -58,7 +145,7 @@ def copia_archivo(origen, destino):
         # Ruta completa del nuevo archivo en "destino"
         ruta_nuevo_archivo = os.path.join(destino, nuevo_nombre_completo)
         # Copiar el archivo a la carpeta "destino"
-        print("Lin 54 "+ruta_nuevo_archivo)
+        print("Lin 132 "+ruta_nuevo_archivo)
         
         shutil.copy(ruta_ultimo_archivo, ruta_nuevo_archivo)
         salida = os.path.join(destino, nuevo_nombre_archivo + ".xlsx")
@@ -292,6 +379,7 @@ def ejecuta_programa_R(ruta_programa_r):
     abierto = False
     abierto = archivo_esta_abierto(ruta_archivos_recibidos + "/Faltan.xlsx")
     print(ruta_archivos_recibidos + "/Faltan.xlsx")
+    cerrar_libro_excel(os.path.join(ruta_archivos_recibidos, "Faltan.xlsx"))
     if abierto:
         hint.config(text="Cierre archivo de Excel y vuelva a ejecutar")
         hint.update()
@@ -330,6 +418,7 @@ def hay_conexion_internet():
 
    
 def abre_archivo_excel(ruta_archivo_excel):
+    # cerrar_libro_excel(ruta_archivo_excel)
     # Comando para abrir el archivo con Excel en el sistema operativo
     comando = f"start excel \"{ruta_archivo_excel}\""
 
@@ -394,7 +483,7 @@ def pasos_ejecutar():
     global ruta_archivos_recibidos, nombre_programa
     ruta_archivos_recibidos = entry.get()
     asigna_parametro("ruta_archivos_recibidos")
-    nombre_programa = entry1.get()
+    nombre_programa = combobox.get()
     asigna_parametro("nombre_programa")
     
     if checkbox_reps.get():
@@ -415,7 +504,7 @@ def pasos_ejecutar():
         hint.update()
         ejecuta_programa_R(ruta_archivos_recibidos + '/' + nombre_programa)
         time.sleep(8)
-        abre_archivo_excel(ruta_archivos_recibidos + "/Faltan.xlsx")
+        abre_archivo_excel(os.path.join(ruta_archivos_recibidos,"Faltan.xlsx"))
         hint.config(text="")
         hint.update()
 def keep_on_top():
@@ -432,10 +521,45 @@ def informa_conexion_internet():
         icon_label.config(image=icon_image)
     icon_label.grid(row=8, column=3)
     root.after(1000, informa_conexion_internet)  # Llamar a la función nuevamente después de 1000 milisegundos (1 segundo)
+def selecciona_carpeta():
+    global ruta_archivos_recibidos
+    ruta_seleccionada = filedialog.askdirectory(title="Seleccionar carpeta")
+    if ruta_seleccionada:
+        entry.delete(0, tk.END)  # Limpiar el contenido actual del Entry
+        entry.insert(0, ruta_seleccionada)
+        ruta_archivos_recibidos = ruta_seleccionada
+        actualizar_combobox()
+def actualizar_combobox():
+    archivos_r = listar_archivos_R(entry.get())
+    combobox['values'] = archivos_r
+    if len(archivos_r) > 0:
+        combobox.set(archivos_r[0])
+    else:
+        combobox.set("")
+def cerrar_libro_excel(ruta_archivo):
+    nombre = "Faltan.xlsx"
+    for proceso in psutil.process_iter(attrs=['pid', 'name']):
+        if proceso.info['name'] == nombre:
+            pid = proceso.info['pid']
+            try:
+                p = psutil.Process(pid)
+                archivos_abiertos = p.open_files()
+            except Exception as e:
+                print(f"Error al procesar {nombre}: {e}")
+            for archivo in archivos_abiertos:
+                if archivo.path == os.path.normpath(ruta_archivo):
+                    print(f"Archivo {ruta_archivo} abierto por el proceso {pid}")
+                    try:
+                        p.terminate()  # Termina el proceso que tiene el archivo abierto
+                        print(f"Proceso {nombre} (PID: {pid}) cerrado.")
+                    except Exception as e:
+                        print(f"Error al cerrar el proceso {nombre}: {e}")
 
 
 #PROGRAMA PRINCIPAL
 
+print("Nombre del ejecutable: "+os.path.basename(sys.argv[0]))
+copia_nueva_version() # En caso de actualización
 script_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
 images_dir = os.path.join(script_dir, 'images')
 # Ruta de la carpeta "C:/Archivos recibidos"
@@ -458,28 +582,31 @@ ruta_downloads = download_dir
 
 # Configuración de la ventana
 root = tk.Tk()
-root.title("Reportes diarios de capacidad (camas)")
+root.title("Reportes diarios de capacidad (camas)  Ver.("+version+")")
 root.geometry("480x220")
 logo_path = os.path.join(images_dir, 'Logo.ico')
 root.iconbitmap(logo_path) 
 root.lift()
 keep_on_top()
-# Simbolo de conexión
+# Simbolos de conexión y carpeta
 
 icon_path = os.path.join(images_dir, 'wifi.png')
 icon_image = PhotoImage(file=icon_path)
 icon_path1 = os.path.join(images_dir, 'nowifi.png')
 icon_image_disconnect = PhotoImage(file=icon_path1)
 icon_label = tk.Label(root, image=icon_image)
-
+icon_path = os.path.join(images_dir, 'folder.png')
+icon_image_folder = PhotoImage(file=icon_path)
 # Etiqueta para indicar al usuario que ingrese texto
 etiqueta = tk.Label(root, text="    Ubicación de los programas en R:")
 etiqueta.grid(row=2, column=1, pady=10)
 
 # Campo de captura de texto
 entry = tk.Entry(root, width=30)
-entry.grid(row=2, column=2, pady=10)
+entry.grid(row=2, column=2, pady=10,sticky="e")
 entry.insert(0, ruta_archivos_recibidos)
+boton_sel_carpeta = tk.Button(root, image=icon_image_folder, command=selecciona_carpeta)
+boton_sel_carpeta.grid(row=2, column=3,sticky="w")
 
 # Variable para almacenar el estado del checkbox
 checkbox_reps = tk.IntVar()
@@ -499,9 +626,11 @@ checkbox3 = tk.Checkbutton(root, text="3. Correr programa en R", variable=checkb
 checkbox3.grid(row=5, column=2, padx=5, sticky="w")
 checkbox3.select()
 
-entry1 = tk.Entry(root, width=30)
-entry1.grid(row=6, column=2, pady=5)
-entry1.insert(0, nombre_programa)
+# Selección del programa R
+archivos_r = listar_archivos_R(entry.get())
+combobox = ttk.Combobox(root, values=archivos_r)
+combobox.grid(row=6, column=2, pady=5)
+combobox.set(nombre_programa)
 
 # Avisos
 hint = tk.Label(root, text="",  fg="green")
@@ -518,6 +647,8 @@ boton_obtener.grid(row=7, column=2,columnspan=1, pady=1)
 
 #Verifica conexión a Internet
 informa_conexion_internet()
+update_program()
 
+entry.bind("<FocusOut>", lambda event: actualizar_combobox())
 # Mostrar la ventana
 root.mainloop()
