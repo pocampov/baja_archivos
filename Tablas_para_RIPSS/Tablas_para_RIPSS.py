@@ -605,6 +605,7 @@ def crea_tabla_11(nombre_eps):
         if str(row[0]).strip() == nombre_eps.strip():
             codigo_ips = str(row[1]).strip()
             registro_localidad = diccionario_ips.get(codigo_ips,False)
+            localidad = "Sin Localizar"
             if registro_localidad:
                 localidad = registro_localidad[32]
             prestadores.append((codigo_ips,localidad))
@@ -682,6 +683,228 @@ def crea_tabla_12(nombre_eps):
     t_mixto = len([(x,y) for (x,y) in registros if y == "MIXTO"])
     
     data.append(["TOTAL", t_primario, t_complementario, t_mixto,totalg,round(suma_porc,2) ] )
+
+    return data
+
+def crea_tabla_13(nombre_eps):
+    hint.config(text="Elaborando Tabla 13 ...")
+    root.update()
+    global sheet_ripss  # archivo_RIPSS
+    # global sheet_prestadores # archivo con prestadores
+    global sheet_capacidad # Códigos de capacidad instalada
+    carga_libros(1)
+    carga_libros(3)
+    # Crear un diccionario codigo_ips: array geolocalización
+    diccionario_grupo_servicios = {}
+        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
+    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
+        nombre_grupo = str(row_grupo[0])
+        servicio = str(row_grupo[1])
+        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    # Obtiene información
+    registros = []
+    no_esta = []
+    for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
+        if str(row[0]).strip() == nombre_eps.strip():
+            servicio = str(row[5]).strip()
+            red_urgencias = str(row[9]).strip()
+            grupo = diccionario_grupo_servicios.get(servicio,False)
+            if not grupo:
+                grupo = "Servicio sin agrupar"
+            if red_urgencias in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
+                registros.append((grupo, red_urgencias))
+    # Redefinición nombres_grupo
+    # nombres_grupo = sorted(set(diccionario_grupo_servicios.values()))
+    nombres_grupo = list(set([x for (x,y) in registros]))
+    # Crea la matriz (tabla)
+    data = []
+    titulo1 = ["GRUPO DE SERVICIOS",
+            "PRIMARIO",
+            "COMPLEMENTARIO",
+            "MIXTO",
+            "TOTAL GENERAL",
+            "%"
+            ]
+    data.append(titulo1)
+    totalg = len(registros)
+    suma_porc = 0
+    for nombre in nombres_grupo:
+        tot_primario = len([(x,y) for (x,y) in registros if x == nombre and y == "PRIMARIO"])
+        tot_complementario = len([(x,y) for (x,y) in registros if x == nombre and y == "COMPLEMENTARIO"])
+        tot_mixto = len([(x,y) for (x,y) in registros if x == nombre and y == "MIXTO"])
+        total = tot_primario + tot_complementario + tot_mixto
+        porcent = round((total * 100)/ totalg, 2)
+        suma_porc += (total * 100)/ totalg
+        data.append([nombre, tot_primario, tot_complementario, tot_mixto, total, porcent])
+    t_primario = len([(x,y) for (x,y) in registros if y == "PRIMARIO"]) 
+    t_complementario = len([(x,y) for (x,y) in registros if y == "COMPLEMENTARIO"])
+    t_mixto = len([(x,y) for (x,y) in registros if y == "MIXTO"])
+    
+    data.append(["TOTAL", t_primario, t_complementario, t_mixto,totalg,round(suma_porc,2) ] )
+
+    return data
+
+def crea_tabla_14(nombre_eps):
+    hint.config(text="Elaborando Tabla 14 ...")
+    root.update()
+    global sheet_ripss  # archivo_RIPSS
+    # global sheet_prestadores # archivo con prestadores
+    global sheet_capacidad # Códigos de capacidad instalada
+    carga_libros(1)
+    carga_libros(3)
+    # Crear un diccionario codigo_ips: array geolocalización
+    diccionario_grupo_servicios = {}
+        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
+    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
+        nombre_grupo = str(row_grupo[0])
+        servicio = str(row_grupo[1])
+        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    # Obtiene información
+    registros = []
+    no_esta = []
+    for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
+        if str(row[0]).strip() == nombre_eps.strip():
+            servicio = str(row[5]).strip()
+            red_oncologica = str(row[8]).strip()
+            grupo = diccionario_grupo_servicios.get(servicio,False)
+            if not grupo:
+                grupo = "Servicio sin agrupar"
+            if red_oncologica in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
+                registros.append((grupo, red_oncologica))
+    # Redefinición nombres_grupo
+    # nombres_grupo = sorted(set(diccionario_grupo_servicios.values()))
+    nombres_grupo = list(set([x for (x,y) in registros]))
+    # Crea la matriz (tabla)
+    data = []
+    titulo1 = ["GRUPO DE SERVICIOS",
+            "PRIMARIO",
+            "COMPLEMENTARIO",
+            "MIXTO",
+            "TOTAL GENERAL",
+            "%"
+            ]
+    data.append(titulo1)
+    totalg = len(registros)
+    suma_porc = 0
+    for nombre in nombres_grupo:
+        tot_primario = len([(x,y) for (x,y) in registros if x == nombre and y == "PRIMARIO"])
+        tot_complementario = len([(x,y) for (x,y) in registros if x == nombre and y == "COMPLEMENTARIO"])
+        tot_mixto = len([(x,y) for (x,y) in registros if x == nombre and y == "MIXTO"])
+        total = tot_primario + tot_complementario + tot_mixto
+        porcent = round((total * 100)/ totalg, 2)
+        suma_porc += (total * 100)/ totalg
+        data.append([nombre, tot_primario, tot_complementario, tot_mixto, total, porcent])
+    t_primario = len([(x,y) for (x,y) in registros if y == "PRIMARIO"]) 
+    t_complementario = len([(x,y) for (x,y) in registros if y == "COMPLEMENTARIO"])
+    t_mixto = len([(x,y) for (x,y) in registros if y == "MIXTO"])
+    
+    data.append(["TOTAL", t_primario, t_complementario, t_mixto,totalg,round(suma_porc,2) ] )
+
+    return data
+
+def crea_tabla_15(nombre_eps):
+    hint.config(text="Elaborando Tabla 15 ...")
+    root.update()
+    global sheet_ripss  # archivo_RIPSS
+    # global sheet_prestadores # archivo con prestadores
+    global sheet_capacidad # Códigos de capacidad instalada
+    carga_libros(1)
+    carga_libros(3)
+    # Crear un diccionario codigo_ips: array geolocalización
+    diccionario_grupo_servicios = {}
+        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
+    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
+        nombre_grupo = str(row_grupo[0])
+        servicio = str(row_grupo[1])
+        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    # Obtiene información
+    registros = []
+    no_esta = []
+    for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
+        if str(row[0]).strip() == nombre_eps.strip():
+            servicio = str(row[5]).strip()
+            red_alto = str(row[10]).strip()
+            grupo = diccionario_grupo_servicios.get(servicio,False)
+            if not grupo:
+                grupo = "Servicio sin agrupar"
+            if red_alto in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
+                registros.append((grupo, red_alto))
+    # Redefinición nombres_grupo
+    # nombres_grupo = sorted(set(diccionario_grupo_servicios.values()))
+    nombres_grupo = list(set([x for (x,y) in registros]))
+    # Crea la matriz (tabla)
+    data = []
+    titulo1 = ["GRUPO DE SERVICIOS",
+            "PRIMARIO",
+            "COMPLEMENTARIO",
+            "MIXTO",
+            "TOTAL GENERAL",
+            "%"
+            ]
+    data.append(titulo1)
+    totalg = len(registros)
+    suma_porc = 0
+    for nombre in nombres_grupo:
+        tot_primario = len([(x,y) for (x,y) in registros if x == nombre and y == "PRIMARIO"])
+        tot_complementario = len([(x,y) for (x,y) in registros if x == nombre and y == "COMPLEMENTARIO"])
+        tot_mixto = len([(x,y) for (x,y) in registros if x == nombre and y == "MIXTO"])
+        total = tot_primario + tot_complementario + tot_mixto
+        porcent = round((total * 100)/ totalg, 2)
+        suma_porc += (total * 100)/ totalg
+        data.append([nombre, tot_primario, tot_complementario, tot_mixto, total, porcent])
+    t_primario = len([(x,y) for (x,y) in registros if y == "PRIMARIO"]) 
+    t_complementario = len([(x,y) for (x,y) in registros if y == "COMPLEMENTARIO"])
+    t_mixto = len([(x,y) for (x,y) in registros if y == "MIXTO"])
+    
+    data.append(["TOTAL", t_primario, t_complementario, t_mixto,totalg,round(suma_porc,2) ] )
+
+    return data
+
+def crea_tabla_16(nombre_eps):
+    hint.config(text="Elaborando Tabla 16 ...")
+    root.update()
+    global sheet_ripss  # archivo_RIPSS
+    # global sheet_prestadores # archivo con prestadores
+    global sheet_capacidad # Códigos de capacidad instalada
+    carga_libros(1)
+    carga_libros(3)
+    # Crear un diccionario codigo_ips: array geolocalización
+    diccionario_grupo_servicios = {}
+        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
+    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
+        nombre_grupo = str(row_grupo[0])
+        servicio = str(row_grupo[1])
+        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    # Obtiene información
+    registros = []
+    no_esta = []
+    for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
+        if str(row[0]).strip() == nombre_eps.strip():
+            servicio = str(row[5]).strip()
+            grupo = diccionario_grupo_servicios.get(servicio,False)
+            if not grupo:
+                grupo = "Servicio sin agrupar"
+            registros.append((grupo, servicio))
+    # Redefinición nombres_grupo
+    # nombres_grupo = sorted(set(diccionario_grupo_servicios.values()))
+    nombres_grupo = list(set([x for (x,y) in registros]))
+    # Crea la matriz (tabla)
+    data = []
+    titulo1 = ["GRUPO DE SERVICIOS",
+            "CANTIDAD DE SERVICIOS",
+            "OFERTA TEÓRICA",
+            "TOTAL ATENCIONES",	
+            "SUFICIENCIA/DÉFICIT"
+            ]
+    data.append(titulo1)
+    totalg = 0
+    suma_porc = 0
+    for nombre in nombres_grupo:
+        tot_servicio = len([(x,y) for (x,y) in registros if x == nombre])
+        data.append([nombre, tot_servicio, "", "", ""])
+        totalg += tot_servicio
+    
+    data.append(["TOTAL", totalg, "", "", "" ] )
 
     return data
 
@@ -823,8 +1046,33 @@ def crea_hoja_Analisis_EAPB():
     if checkbox_tabla12.get():
         nombre_eps = combobox_eps.get()
         tabla = crea_tabla_12(nombre_eps)
-        dibuja_tabla(tabla,"Tabla_12", wb, sheet1,[nombre_eps,"","","","",""])
+        dibuja_tabla(tabla,"Tabla_12", wb, sheet1,["Red General. "+nombre_eps,"","","","",""])
     
+    # Tabla 13
+    if checkbox_tabla13.get():
+        nombre_eps = combobox_eps.get()
+        tabla = crea_tabla_13(nombre_eps)
+        dibuja_tabla(tabla,"Tabla_13", wb, sheet1,["Red de Urgencias. "+nombre_eps,"","","","",""])
+    
+    # Tabla 14
+    if checkbox_tabla14.get():
+        nombre_eps = combobox_eps.get()
+        tabla = crea_tabla_14(nombre_eps)
+        dibuja_tabla(tabla,"Tabla_14", wb, sheet1,["Red de Oncológica. "+nombre_eps,"","","","",""])
+    
+    # Tabla 15
+    if checkbox_tabla15.get():
+        nombre_eps = combobox_eps.get()
+        tabla = crea_tabla_15(nombre_eps)
+        dibuja_tabla(tabla,"Tabla_15", wb, sheet1,["Red de Alto Costo no Oncológica. "+nombre_eps,"","","","",""])
+       
+    # Tabla 16
+    if checkbox_tabla16.get():
+        nombre_eps = combobox_eps.get()
+        tabla = crea_tabla_16(nombre_eps)
+        dibuja_tabla(tabla,"Tabla_16", wb, sheet1,["Suficiencia Servicios. "+nombre_eps,"","","","",""])
+       
+
     # Guardar la hoja de Excel
     hint.config(text="Se ha creado la hoja: "+nombre_hoja)
     root.update()
@@ -1045,18 +1293,18 @@ tabla11.select()
 tabla12 = tk.Checkbutton(f_hoja2, text="Construir tabla 12",font=("Calibri", 8), variable=checkbox_tabla12)
 tabla12.grid(row=4, column=0, padx=5,pady=5)
 tabla12.select()
-tabla13 = tk.Checkbutton(f_hoja2, text="Construir tabla 13",font=("Calibri", 8),state="disabled", variable=checkbox_tabla13)
+tabla13 = tk.Checkbutton(f_hoja2, text="Construir tabla 13",font=("Calibri", 8), variable=checkbox_tabla13)
 tabla13.grid(row=5, column=0, padx=5,pady=5)
-tabla13.deselect()
-tabla14 = tk.Checkbutton(f_hoja2, text="Construir tabla 14",font=("Calibri", 8),state="disabled", variable=checkbox_tabla14)
+tabla13.select()
+tabla14 = tk.Checkbutton(f_hoja2, text="Construir tabla 14",font=("Calibri", 8), variable=checkbox_tabla14)
 tabla14.grid(row=6, column=0, padx=5,pady=5)
-tabla14.deselect()
-tabla15 = tk.Checkbutton(f_hoja2, text="Construir tabla 15",font=("Calibri", 8),state="disabled", variable=checkbox_tabla15)
+tabla14.select()
+tabla15 = tk.Checkbutton(f_hoja2, text="Construir tabla 15",font=("Calibri", 8), variable=checkbox_tabla15)
 tabla15.grid(row=7, column=0, padx=5,pady=5)
-tabla15.deselect()
-tabla16 = tk.Checkbutton(f_hoja2, text="Construir tabla 16",font=("Calibri", 8),state="disabled", variable=checkbox_tabla16)
+tabla15.select()
+tabla16 = tk.Checkbutton(f_hoja2, text="Construir tabla 16",font=("Calibri", 8), variable=checkbox_tabla16)
 tabla16.grid(row=8, column=0, padx=5,pady=5)
-tabla16.deselect()
+tabla16.select()
 
 tabla17 = tk.Checkbutton(f_hoja3, text="Construir tabla 17",font=("Calibri", 8),state="disabled", variable=checkbox_tabla17)
 tabla17.grid(row=1, column=0, padx=5,pady=5)
