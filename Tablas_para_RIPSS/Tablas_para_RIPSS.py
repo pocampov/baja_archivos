@@ -23,7 +23,7 @@ import requests
 from busca_version import busca_version
 
 # variables globales
-version = "1.2"
+version = "1.3"
 archivo_configuracion = "config_tablas.txt"
 download_url = "https://misejecutables.000webhostapp.com" # Ubicación de nuevas versiones
 # === Funciones para auto-actualizar el programa
@@ -635,6 +635,7 @@ def crea_tabla_12(nombre_eps):
     # global sheet_prestadores # archivo con prestadores
     global sheet_capacidad # Códigos de capacidad instalada
     carga_libros(1)
+    """
     carga_libros(3)
     # Crear un diccionario codigo_ips: array geolocalización
     diccionario_grupo_servicios = {}
@@ -643,18 +644,24 @@ def crea_tabla_12(nombre_eps):
         nombre_grupo = str(row_grupo[0])
         servicio = str(row_grupo[1])
         diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    """
     # Obtiene información
     registros = []
-    no_esta = []
+    sin_agrupar = []
     for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
         if str(row[0]).strip() == nombre_eps.strip():
             servicio = str(row[5]).strip()
             red_general = str(row[7]).strip()
-            grupo = diccionario_grupo_servicios.get(servicio,False)
+            grupo = str(row[16]).strip()
+            #grupo = diccionario_grupo_servicios.get(servicio,False)
             if not grupo:
                 grupo = "Servicio sin agrupar"
+                sin_agrupar.append(servicio)
             if red_general in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
                 registros.append((grupo, red_general))
+    print("Servicios sin agrupar: ")
+    for item in set(sin_agrupar):
+        print(item)
     # Redefinición nombres_grupo
     # nombres_grupo = sorted(set(diccionario_grupo_servicios.values()))
     nombres_grupo = list(set([x for (x,y) in registros]))
@@ -703,16 +710,21 @@ def crea_tabla_13(nombre_eps):
         diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
     # Obtiene información
     registros = []
-    no_esta = []
+    sin_agrupar = []
     for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
         if str(row[0]).strip() == nombre_eps.strip():
             servicio = str(row[5]).strip()
             red_urgencias = str(row[9]).strip()
-            grupo = diccionario_grupo_servicios.get(servicio,False)
+            grupo = str(row[16]).strip()
+            #grupo = diccionario_grupo_servicios.get(servicio,False)
             if not grupo:
                 grupo = "Servicio sin agrupar"
+                sin_agrupar.append(servicio)
             if red_urgencias in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
                 registros.append((grupo, red_urgencias))
+    print("Servicios sin agrupar: ")
+    for item in set(sin_agrupar):
+        print(item)
     # Redefinición nombres_grupo
     # nombres_grupo = sorted(set(diccionario_grupo_servicios.values()))
     nombres_grupo = list(set([x for (x,y) in registros]))
@@ -766,7 +778,8 @@ def crea_tabla_14(nombre_eps):
         if str(row[0]).strip() == nombre_eps.strip():
             servicio = str(row[5]).strip()
             red_oncologica = str(row[8]).strip()
-            grupo = diccionario_grupo_servicios.get(servicio,False)
+            #grupo = diccionario_grupo_servicios.get(servicio,False)
+            grupo = str(row[16]).strip()
             if not grupo:
                 grupo = "Servicio sin agrupar"
             if red_oncologica in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
@@ -824,7 +837,8 @@ def crea_tabla_15(nombre_eps):
         if str(row[0]).strip() == nombre_eps.strip():
             servicio = str(row[5]).strip()
             red_alto = str(row[10]).strip()
-            grupo = diccionario_grupo_servicios.get(servicio,False)
+            #grupo = diccionario_grupo_servicios.get(servicio,False)
+            grupo = str(row[16]).strip()
             if not grupo:
                 grupo = "Servicio sin agrupar"
             if red_alto in ["PRIMARIO","COMPLEMENTARIO","MIXTO"]:
@@ -881,7 +895,8 @@ def crea_tabla_16(nombre_eps):
     for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
         if str(row[0]).strip() == nombre_eps.strip():
             servicio = str(row[5]).strip()
-            grupo = diccionario_grupo_servicios.get(servicio,False)
+            # grupo = diccionario_grupo_servicios.get(servicio,False)
+            grupo = str(row[16]).strip()
             if not grupo:
                 grupo = "Servicio sin agrupar"
             registros.append((grupo, servicio))
@@ -1252,8 +1267,12 @@ checkbox_tabla14 = tk.IntVar()
 checkbox_tabla15 = tk.IntVar()
 checkbox_tabla16 = tk.IntVar()
 checkbox_tabla17 = tk.IntVar()
-
+checkbox_tabla18 = tk.IntVar()
+checkbox_tabla19 = tk.IntVar()
+checkbox_tabla20 = tk.IntVar()
+checkbox_tabla21 = tk.IntVar()
 checkbox_tabla22 = tk.IntVar()
+checkbox_tabla23 = tk.IntVar()
 
 tabla1 = tk.Checkbutton(f_hoja1, text="Construir tabla 1",font=("Calibri", 8), variable=checkbox_tabla1)
 tabla1.grid(row=5, column=0, padx=5,pady=2, sticky="w")
@@ -1309,6 +1328,18 @@ tabla16.select()
 tabla17 = tk.Checkbutton(f_hoja3, text="Construir tabla 17",font=("Calibri", 8),state="disabled", variable=checkbox_tabla17)
 tabla17.grid(row=1, column=0, padx=5,pady=5)
 tabla17.deselect()
+tabla18 = tk.Checkbutton(f_hoja3, text="Construir tabla 18",font=("Calibri", 8),state="disabled", variable=checkbox_tabla18)
+tabla18.grid(row=2, column=0, padx=5,pady=5)
+tabla18.deselect()
+tabla19 = tk.Checkbutton(f_hoja3, text="Construir tabla 19",font=("Calibri", 8),state="disabled", variable=checkbox_tabla19)
+tabla19.grid(row=3, column=0, padx=5,pady=5)
+tabla19.deselect()
+tabla20 = tk.Checkbutton(f_hoja3, text="Construir tabla 20",font=("Calibri", 8),state="disabled", variable=checkbox_tabla20)
+tabla20.grid(row=4, column=0, padx=5,pady=5)
+tabla20.deselect()
+tabla21 = tk.Checkbutton(f_hoja3, text="Construir tabla 21",font=("Calibri", 8),state="disabled", variable=checkbox_tabla21)
+tabla21.grid(row=5, column=0, padx=5,pady=5)
+tabla21.deselect()
 
 tabla22 = tk.Checkbutton(f_hoja4, text="Construir tabla 22",font=("Calibri", 8),state="disabled", variable=checkbox_tabla22)
 tabla22.grid(row=1, column=0, padx=5,pady=5)
