@@ -10,7 +10,7 @@ from tkinter import filedialog
 
 from tqdm import tqdm
 
-import openpyxl
+#import openpyxl
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -126,7 +126,7 @@ def carga_libros(sel):
 
 def selecciona_carpeta(sel):
     global archivo_prestadores, archivo_RIPSS
-    global archivo_destino, archivo_origen, archivo_codigos_capacidad
+    global archivo_destino, archivo_origen, archivo_codigos_capacidad, archivo_capacidad
     ruta_seleccionada = os.path.join(os.environ['USERPROFILE'], 'Documents')
     
     if ruta_seleccionada:
@@ -157,6 +157,15 @@ def selecciona_carpeta(sel):
             print(ruta_seleccionada)
             entry3.insert(0, ruta_seleccionada)
             archivo_codigos_capacidad = ruta_seleccionada
+        if sel == 4:
+            ruta_seleccionada = recupera_parametro("archivo_capacidad")
+            directorio, nombre_archivo = os.path.split(ruta_seleccionada)
+            ruta_seleccionada = filedialog.askopenfilename(title="Ubicación de la fuente de capacidad instalada", initialdir=directorio,filetypes=(("Archivos Excel", "*.xlsx"), ("Todos los archivos", "*.*")) )
+            entry4.delete(0, tk.END)  # Limpiar el contenido actual del Entry
+            archivo_capacidad = ruta_seleccionada
+            print(ruta_seleccionada)
+            entry4.insert(0, ruta_seleccionada)
+            archivo_capacidad = ruta_seleccionada
     
 def actualiza_ripss():
     global sheet_ripss, sheet_prestadores, workbook_ripss
@@ -700,6 +709,7 @@ def crea_tabla_13(nombre_eps):
     # global sheet_prestadores # archivo con prestadores
     global sheet_capacidad # Códigos de capacidad instalada
     carga_libros(1)
+    """
     carga_libros(3)
     # Crear un diccionario codigo_ips: array geolocalización
     diccionario_grupo_servicios = {}
@@ -708,6 +718,7 @@ def crea_tabla_13(nombre_eps):
         nombre_grupo = str(row_grupo[0])
         servicio = str(row_grupo[1])
         diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    """
     # Obtiene información
     registros = []
     sin_agrupar = []
@@ -763,14 +774,6 @@ def crea_tabla_14(nombre_eps):
     # global sheet_prestadores # archivo con prestadores
     global sheet_capacidad # Códigos de capacidad instalada
     carga_libros(1)
-    carga_libros(3)
-    # Crear un diccionario codigo_ips: array geolocalización
-    diccionario_grupo_servicios = {}
-        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
-    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
-        nombre_grupo = str(row_grupo[0])
-        servicio = str(row_grupo[1])
-        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
     # Obtiene información
     registros = []
     no_esta = []
@@ -822,6 +825,7 @@ def crea_tabla_15(nombre_eps):
     # global sheet_prestadores # archivo con prestadores
     global sheet_capacidad # Códigos de capacidad instalada
     carga_libros(1)
+    """
     carga_libros(3)
     # Crear un diccionario codigo_ips: array geolocalización
     diccionario_grupo_servicios = {}
@@ -830,6 +834,7 @@ def crea_tabla_15(nombre_eps):
         nombre_grupo = str(row_grupo[0])
         servicio = str(row_grupo[1])
         diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
+    """
     # Obtiene información
     registros = []
     no_esta = []
@@ -874,21 +879,13 @@ def crea_tabla_15(nombre_eps):
 
     return data
 
-def crea_tabla_16(nombre_eps):
+def crea_tabla_20(nombre_eps):
     hint.config(text="Elaborando Tabla 16 ...")
     root.update()
     global sheet_ripss  # archivo_RIPSS
     # global sheet_prestadores # archivo con prestadores
     global sheet_capacidad # Códigos de capacidad instalada
     carga_libros(1)
-    carga_libros(3)
-    # Crear un diccionario codigo_ips: array geolocalización
-    diccionario_grupo_servicios = {}
-        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
-    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
-        nombre_grupo = str(row_grupo[0])
-        servicio = str(row_grupo[1])
-        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
     # Obtiene información
     registros = []
     no_esta = []
@@ -967,6 +964,7 @@ def crea_libro():
     asigna_parametro("archivo_origen")
     asigna_parametro("archivo_destino")
     asigna_parametro("archivo_codigos_capacidad")
+    asigna_parametro("archivo_capacidad")
     crea_hoja_Distrital()
     crea_hoja_Analisis_EAPB()
     # Guardar el libro de Excel
@@ -1038,7 +1036,7 @@ def crea_hoja_Distrital():
     root.update()
 
 def crea_hoja_Analisis_EAPB():
-    nombre_hoja = "1.Análisis_EAPB"
+    nombre_hoja = "2.Análisis_EAPB"
     hint.config(text="En ejecución ...")
     root.update()
     # Crear una nueva hoja activa
@@ -1081,13 +1079,11 @@ def crea_hoja_Analisis_EAPB():
         tabla = crea_tabla_15(nombre_eps)
         dibuja_tabla(tabla,"Tabla_15", wb, sheet1,["Red de Alto Costo no Oncológica. "+nombre_eps,"","","","",""])
        
-    # Tabla 16
+    # Tabla 20
     if checkbox_tabla16.get():
         nombre_eps = combobox_eps.get()
-        tabla = crea_tabla_16(nombre_eps)
-        dibuja_tabla(tabla,"Tabla_16", wb, sheet1,["Suficiencia Servicios. "+nombre_eps,"","","","",""])
-       
-
+        tabla = crea_tabla_20(nombre_eps)
+        dibuja_tabla(tabla,"Tabla_20", wb, sheet1,["Suficiencia Servicios. "+nombre_eps,"","","","",""])
     # Guardar la hoja de Excel
     hint.config(text="Se ha creado la hoja: "+nombre_hoja)
     root.update()
@@ -1169,7 +1165,7 @@ images_dir = os.path.join(script_dir, 'images')
 # Configuración de la ventana principal
 root = tk.Tk()
 root.title("Tablas para informe RIPSS  Ver.("+version+")")
-root.geometry("535x510")
+root.geometry("535x540")
 root.configure(bg="white")
 root.resizable(False, False)
 logo_path = os.path.join(images_dir, 'Logo.ico')
@@ -1204,7 +1200,7 @@ title_frame_hoja2.grid(row=0, column=0, pady=5)
 # Frame para hoja 3
 f_hoja3 = tk.Frame(contenedor_hojas, borderwidth=0, relief="groove")
 f_hoja3.grid(row=0, column=2, padx=(0,5), pady=5, sticky="n")
-title_frame_hoja3 = tk.Label(f_hoja3, text="3. Suficiencia EAPB", font=("Calibri", 11))
+title_frame_hoja3 = tk.Label(f_hoja3, text="3. Oferta teórica \nEAPB", font=("Calibri", 11))
 title_frame_hoja3.grid(row=0, column=0, pady=5)
 
 # Frame para hoja 4
@@ -1216,7 +1212,7 @@ title_frame_hoja4.grid(row=0, column=0, pady=5)
 # frame para aviso varios
 f_hint = tk.Frame(root, borderwidth=1, width=524,relief="groove", bg="white")
 #f_hint.grid(row=4, column=0, columnspan=3, padx=(5,0), pady=5, sticky="nw")
-f_hint.place(x=5, y=480, width=524, height=25)
+f_hint.place(x=5, y=510, width=524, height=25)
 
 # Selección de carpeta de origen de RIPSS
 # Campo de captura de texto
@@ -1249,6 +1245,16 @@ archivo_codigos_capacidad = recupera_parametro("archivo_codigos_capacidad")
 entry3.insert(0, archivo_codigos_capacidad)
 boton_sel_carpeta3 = tk.Button(frame_archivos, image=icon_image_folder, command=lambda: selecciona_carpeta(3))
 boton_sel_carpeta3.grid(row=3, column=5, padx=(8,7), sticky="w")
+
+label4 = tk.Label(frame_archivos, text="Archivo Capacidad Instalada",font=("Calibri", 10),bg="white")
+label4.grid(row=4, column=0, pady=5, padx=(5,0), sticky="w")
+entry4 = tk.Entry(frame_archivos, width=43)
+entry4.grid(row=4, column=1, columnspan=2, pady=5,sticky="w")
+archivo_capacidad = os.path.join(os.environ['USERPROFILE'], 'Documents')
+archivo_capacidad = recupera_parametro("archivo_capacidad")
+entry4.insert(0, archivo_capacidad)
+boton_sel_carpeta4 = tk.Button(frame_archivos, image=icon_image_folder, command=lambda: selecciona_carpeta(4))
+boton_sel_carpeta4.grid(row=4, column=5, padx=(8,7), sticky="w")
 
 checkbox_tabla1 = tk.IntVar()
 checkbox_tabla2 = tk.IntVar()
@@ -1321,28 +1327,28 @@ tabla14.select()
 tabla15 = tk.Checkbutton(f_hoja2, text="Construir tabla 15",font=("Calibri", 8), variable=checkbox_tabla15)
 tabla15.grid(row=7, column=0, padx=5,pady=5)
 tabla15.select()
-tabla16 = tk.Checkbutton(f_hoja2, text="Construir tabla 16",font=("Calibri", 8), variable=checkbox_tabla16)
-tabla16.grid(row=8, column=0, padx=5,pady=5)
-tabla16.select()
 
+tabla16 = tk.Checkbutton(f_hoja3, text="Construir tabla 16",font=("Calibri", 8), variable=checkbox_tabla16)
+tabla16.grid(row=1, column=0, padx=5,pady=5)
+tabla16.select()
 tabla17 = tk.Checkbutton(f_hoja3, text="Construir tabla 17",font=("Calibri", 8),state="disabled", variable=checkbox_tabla17)
-tabla17.grid(row=1, column=0, padx=5,pady=5)
+tabla17.grid(row=2, column=0, padx=5,pady=5)
 tabla17.deselect()
 tabla18 = tk.Checkbutton(f_hoja3, text="Construir tabla 18",font=("Calibri", 8),state="disabled", variable=checkbox_tabla18)
-tabla18.grid(row=2, column=0, padx=5,pady=5)
+tabla18.grid(row=3, column=0, padx=5,pady=5)
 tabla18.deselect()
 tabla19 = tk.Checkbutton(f_hoja3, text="Construir tabla 19",font=("Calibri", 8),state="disabled", variable=checkbox_tabla19)
-tabla19.grid(row=3, column=0, padx=5,pady=5)
+tabla19.grid(row=4, column=0, padx=5,pady=5)
 tabla19.deselect()
-tabla20 = tk.Checkbutton(f_hoja3, text="Construir tabla 20",font=("Calibri", 8),state="disabled", variable=checkbox_tabla20)
-tabla20.grid(row=4, column=0, padx=5,pady=5)
-tabla20.deselect()
-tabla21 = tk.Checkbutton(f_hoja3, text="Construir tabla 21",font=("Calibri", 8),state="disabled", variable=checkbox_tabla21)
-tabla21.grid(row=5, column=0, padx=5,pady=5)
-tabla21.deselect()
+tabla20 = tk.Checkbutton(f_hoja3, text="Construir tabla 20",font=("Calibri", 8), variable=checkbox_tabla20)
+tabla20.grid(row=5, column=0, padx=5,pady=5)
+tabla20.select()
 
+tabla21 = tk.Checkbutton(f_hoja4, text="Construir tabla 21",font=("Calibri", 8),state="disabled", variable=checkbox_tabla21)
+tabla21.grid(row=1, column=0, padx=5,pady=5)
+tabla21.deselect()
 tabla22 = tk.Checkbutton(f_hoja4, text="Construir tabla 22",font=("Calibri", 8),state="disabled", variable=checkbox_tabla22)
-tabla22.grid(row=1, column=0, padx=5,pady=5)
+tabla22.grid(row=2, column=0, padx=5,pady=5)
 tabla22.deselect()
 
 # Selección de EPS
