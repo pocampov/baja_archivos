@@ -1,0 +1,4 @@
+archivo_origen=C:/Users/USER/OneDrive/Documentos/Secretaria de Salud/Tablas para RIPSS/Prestadores_31-12-2022 geolocalizados.xlsx
+archivo_destino=C:/Users/USER/OneDrive/Documentos/Secretaria de Salud/RIPSS/RIPSS_16_07_23_Depurada_OK.xlsx
+archivo_codigos_capacidad=C:/Users/USER/OneDrive/Documentos/Secretaria de Salud/RIPSS/CODIGOS_CAPACIDAD_INSTALADA_RIPSS.xlsx
+archivo_capacidad=C:/Users/USER/OneDrive/Documentos/Secretaria de Salud/RIPSS/Descargas_REPS/CapacidadInstalada_31-12-2022.xlsx

@@ -2,11 +2,14 @@
 # análisis de oferta de las RIPPS
 #
 import datetime
-
+import time
+import panel as pn
 import tkinter as tk
+import subprocess
 from tkinter import PhotoImage
 from tkinter import ttk
 from tkinter import filedialog
+import threading
 
 from tqdm import tqdm
 
@@ -20,12 +23,15 @@ from urllib.parse import urljoin
 import os
 import sys
 import requests
+import json
 from busca_version import busca_version
+from parametros_capacidad import parametros_capacidad
 
 # variables globales
 version = "1.3"
 archivo_configuracion = "config_tablas.txt"
 download_url = "https://misejecutables.000webhostapp.com" # Ubicación de nuevas versiones
+
 # === Funciones para auto-actualizar el programa
 def copia_nueva_version():
     nombre_programa = "Tablas_para_RIPSS.exe"
@@ -106,6 +112,7 @@ def carga_libros(sel):
     global sheet_ripss
     global sheet_prestadores
     global sheet_capacidad
+    global sheet_capacidad_recursos
     
     # Cargar los libros de trabajo
     if sel == 1:
@@ -122,7 +129,12 @@ def carga_libros(sel):
         global archivo_codigos_capacidad
         workbook_capacidad = load_workbook(filename=archivo_codigos_capacidad, read_only=True)
         sheet_name_capacidad = "Hoja1"    
-        sheet_capacidad = workbook_capacidad[sheet_name_capacidad]
+        sheet_capacidad = workbook_capacidad[sheet_name_capacidad]    
+    if sel == 4: 
+        global archivo_capacidad
+        workbook_capacidad = load_workbook(filename=archivo_capacidad, read_only=True)
+        sheet_name_capacidad = "CapacidadInstalada"    
+        sheet_capacidad_recursos = workbook_capacidad[sheet_name_capacidad]
 
 def selecciona_carpeta(sel):
     global archivo_prestadores, archivo_RIPSS
@@ -825,16 +837,6 @@ def crea_tabla_15(nombre_eps):
     # global sheet_prestadores # archivo con prestadores
     global sheet_capacidad # Códigos de capacidad instalada
     carga_libros(1)
-    """
-    carga_libros(3)
-    # Crear un diccionario codigo_ips: array geolocalización
-    diccionario_grupo_servicios = {}
-        # Iterar a través de las filas en archivo_prestadores y almacenar los valores en el diccionario
-    for row_grupo in sheet_capacidad.iter_rows(min_row=2, values_only=True):
-        nombre_grupo = str(row_grupo[0])
-        servicio = str(row_grupo[1])
-        diccionario_grupo_servicios[servicio.strip()] = nombre_grupo.upper()
-    """
     # Obtiene información
     registros = []
     no_esta = []
@@ -876,11 +878,99 @@ def crea_tabla_15(nombre_eps):
     t_mixto = len([(x,y) for (x,y) in registros if y == "MIXTO"])
     
     data.append(["TOTAL", t_primario, t_complementario, t_mixto,totalg,round(suma_porc,2) ] )
+    return data
 
+def crea_tabla_16(nombre_eps):
+    hint.config(text="Elaborando Tabla 16 ...")
+    root.update()
+    global sheet_ripss  # archivo_RIPSS
+    # global sheet_prestadores # archivo con prestadores
+    global sheet_capacidad # Códigos de capacidad instalada
+    global sheet_capacidad_recursos # Grupos de servicios, servicios y recursos de capacidad instalada
+    carga_libros(1) # RIPSS depurada
+    carga_libros(3) # Códigos capacidad instalada
+    carga_libros(4) # Capcidad instalada
+    # Obtiene información
+    # Cantidad de cada servicio para la EPS
+    diccionario_cantidad_servicios = {}
+    set_ips = set()
+    for row in sheet_ripss.iter_rows(min_row=2, values_only=True): 
+        if str(row[0]).strip() == nombre_eps.strip():
+            codigo_servicio = str(row[5]).strip().split(" ")[0]
+            cantidad = diccionario_cantidad_servicios.get(codigo_servicio, 0)
+            diccionario_cantidad_servicios[codigo_servicio] = cantidad + 1
+            codigo_habilitacion = str(row[1]).strip()
+            set_ips.add(codigo_habilitacion)
+
+    # Genera un diccionario que por cada ips devuelve una lista de filas: sede, coca_codigo y cantidad
+    diccionario_ips_recursos= {}
+    #registros = []
+    for row in sheet_capacidad_recursos.iter_rows(min_row=2, values_only=True):
+        codigo_habilitacion = row[2].strip()
+        sede = str(row[5]).strip()
+        if codigo_habilitacion in set_ips:
+            coca_codigo = str(row[19]).strip()
+            cantidad = int(str(row[21]).strip())
+            indice = (codigo_habilitacion, coca_codigo)
+            camas = diccionario_ips_recursos.get(indice, 0) 
+            if camas != 0:
+                cantidad += camas
+            diccionario_ips_recursos[indice] = cantidad
+    
+    # Genera un diccionario de recursos dado el servicio = set de recursos
+    # Genera un diccionario de servicios, dado el nombre del grupo lista los servicios
+    diccionario_recursos = {}
+    diccionario_servicios = {}
+    for row in sheet_capacidad.iter_rows(min_row=2, values_only=True):
+        grupo_servicio = str(row[0]).strip()
+        codigo_servicio = str(row[1]).strip().split(" ")[0]
+        recurso = str(row[2]).strip()
+        if not (recurso == "None"):
+            recursos = diccionario_recursos.get(codigo_servicio, False)
+            if recursos:
+                recursos.add(recurso)
+                diccionario_recursos[codigo_servicio] = recursos
+            else:
+                diccionario_recursos[codigo_servicio] = {recurso}
+        servicios = diccionario_servicios.get(grupo_servicio, set())
+        servicios.add(codigo_servicio)
+        diccionario_servicios[grupo_servicio] = servicios
+
+    titulo = ["GRUPO SERVICIO",	"SERVICIO",	
+              "NÚMERO DE SERVICIOS",	"CAPACIDAD INSTALADA CAMAS",	
+              "% OCUPACIÓN", "DÍAS DE ESTANCIA", "OFERTA TEÓRICA"
+             ]
+    data = []
+    data.append(titulo)
+    agrupamiento = "INTERNACION"
+    internacion = []
+    for row in sheet_capacidad.iter_rows(min_row=2, values_only=True):
+        if str(row[0]).strip() == agrupamiento:
+            codigo_servicio = row[1].split(" ")[0]
+            nombre_servicio = " ".join(str(row[1]).split(" ")[1:])
+            internacion.append((codigo_servicio, nombre_servicio))
+    servicios = set(diccionario_cantidad_servicios.keys())
+    for servicio in sorted(list(servicios)):
+        lista_servicios = [x for (x,y) in internacion]
+        nombres = {x:y for (x,y) in internacion}
+        cantidad = 0            
+        if servicio in lista_servicios:
+            grupo_recursos = diccionario_recursos.get(servicio,{})
+            for codigo_habilitacion in set_ips:
+                for recurso in grupo_recursos:
+                    cantidad_recurso = int(diccionario_ips_recursos.get((codigo_habilitacion, recurso),0))
+                    cantidad += cantidad_recurso
+            data.append(["INTERNACION",servicio+" "+nombres[servicio],
+                        diccionario_cantidad_servicios[servicio],
+                        cantidad,
+                        " ",
+                        " ",
+                        " "
+                        ])
     return data
 
 def crea_tabla_20(nombre_eps):
-    hint.config(text="Elaborando Tabla 16 ...")
+    hint.config(text="Elaborando Tabla 20 ...")
     root.update()
     global sheet_ripss  # archivo_RIPSS
     # global sheet_prestadores # archivo con prestadores
@@ -917,7 +1007,6 @@ def crea_tabla_20(nombre_eps):
         totalg += tot_servicio
     
     data.append(["TOTAL", totalg, "", "", "" ] )
-
     return data
 
 
@@ -967,6 +1056,7 @@ def crea_libro():
     asigna_parametro("archivo_capacidad")
     crea_hoja_Distrital()
     crea_hoja_Analisis_EAPB()
+    crea_hoja_Oferta_teorica_EAPB()
     # Guardar el libro de Excel
     i = 0
     nombre_guardar = nombre_libro+".xlsx"
@@ -1078,15 +1168,34 @@ def crea_hoja_Analisis_EAPB():
         nombre_eps = combobox_eps.get()
         tabla = crea_tabla_15(nombre_eps)
         dibuja_tabla(tabla,"Tabla_15", wb, sheet1,["Red de Alto Costo no Oncológica. "+nombre_eps,"","","","",""])
-       
-    # Tabla 20
+    
+    # Guardar la hoja de Excel
+    hint.config(text="Se ha creado la hoja: "+nombre_hoja)
+    root.update()
+
+def crea_hoja_Oferta_teorica_EAPB():
+    nombre_hoja = "3.Oferta_teórica_EAPB"
+    hint.config(text="En ejecución ...")
+    root.update()
+    # Crear una nueva hoja activa
+    global wb
+    sheet1 = wb.create_sheet(title=nombre_hoja)
+
+    # Tabla 16
     if checkbox_tabla16.get():
+        nombre_eps = combobox_eps.get()
+        tabla = crea_tabla_16(nombre_eps)
+        dibuja_tabla(tabla,"Tabla_16", wb, sheet1,[nombre_eps+" Servicios Hospitalarios", "","","","","",""])
+    
+    # Tabla 20
+    if checkbox_tabla20.get():
         nombre_eps = combobox_eps.get()
         tabla = crea_tabla_20(nombre_eps)
         dibuja_tabla(tabla,"Tabla_20", wb, sheet1,["Suficiencia Servicios. "+nombre_eps,"","","","",""])
     # Guardar la hoja de Excel
     hint.config(text="Se ha creado la hoja: "+nombre_hoja)
     root.update()
+
 # Funciones para consultar y almacenar parámetros
 def asigna_parametro(variable):
     global archivo_configuracion
@@ -1157,6 +1266,100 @@ def info_log():
     fecha = datetime.date.today()
     hora = datetime.datetime.now().time()
 
+def salir_panel(event):
+    global server, columnas
+    label_informativo.value = "Saliendo ..."
+    # Define la disposición de la aplicación
+    codigo_cerrar = pn.pane.HTML("<script> window.close(); </script>")
+    layout = pn.Column(codigo_cerrar)
+
+    # Muestra la aplicación
+    columnas.append(layout)
+    server.stop()
+    print("Proceso cerrado")
+
+def graba_parametros(event):
+    global parametros, label_informativo
+    print("Grabando...")
+    cadena_json = "{\n"
+    for parametro in parametros:
+        cadena_json += "\t\"("+parametro[0].value+", '"+parametro[1]+"')\"" + " : {\n"
+        for key_value in parametros[parametro]:
+            cadena_json += '\t\t"'+key_value.value+"\" : \""+parametros[parametro][key_value].value+"\", \n"
+        cadena_json += "\t},\n"
+    cadena_json += "}\n"
+    try:
+        with open("parametros_capacidad.json", "w") as archivo:
+            archivo.write(json.dumps(eval(cadena_json)))
+    except:
+        label_informativo.value = "No se pudo almacenar"
+    label_informativo.value = "Almacenando ..."
+    threading.Timer(2, lambda: setattr(label_informativo, 'value', "")).start()
+
+def parametros():
+    global parametros_capacidad, server, columnas, parametros, label_informativo
+
+    def mi_aplicacion_panel():
+        global parametros_capacidad, server, columnas, parametros, label_informativo
+        pn.extension(design='material')
+        servicio_style = {
+            'color': '#8B0000',
+            'font-weight': 'bold'
+        }   
+        capacidad_input = []
+        caja = []
+        parametros = {}
+        for servicio in parametros_capacidad.keys():
+            input_widget_servicio = pn.widgets.TextInput(name="Servicio", styles = servicio_style)
+            input_widget_servicio.value = str(servicio[0])
+            caja.append(input_widget_servicio)
+            for parametro in parametros_capacidad[servicio]:
+                valor = parametros_capacidad[servicio][parametro]
+                input_widget = pn.widgets.TextInput(name="parametro")
+                input_widget.value = str(parametro)
+                input_widget1 = pn.widgets.TextInput(name="valor")
+                input_widget1.value = str(valor)
+                fila = pn.Row(input_widget, input_widget1)
+                caja.append(fila)
+                clave_valor = parametros.get((input_widget_servicio,servicio[1]),{})
+                clave_valor[input_widget] = input_widget1
+                parametros[(input_widget_servicio,servicio[1])] = clave_valor
+            caja1 = pn.WidgetBox("<h3>"+servicio[1]+"</h3>", *caja)
+            capacidad_input.append(caja1)
+            caja = []
+        
+        salir = pn.widgets.Button(name="Salir", button_type="danger", width=100)
+        salir.on_click(salir_panel)
+        grabar = pn.widgets.Button(name="Grabar", button_type="success", width=100)
+        grabar.on_click(graba_parametros)
+        # Organizar los widgets en columnas
+        columnas = pn.Column(*capacidad_input)
+        label_informativo = pn.widgets.StaticText(name="", value="")
+        
+        # Crea el panel
+        template = pn.template.BootstrapTemplate(
+            title='Parámetros para cálculos de Capacidad instalada',
+            sidebar=[grabar, salir, label_informativo],
+        )
+        template.main.append(columnas)
+        panel = pn.panel(template)
+        # Iniciar el servidor
+        server = panel.show(threaded=True)
+        
+    if os.path.exists("parametros_capacidad.json"):
+        parametros_capacidad = {}
+        with open("parametros_capacidad.json", "r", encoding="utf-8") as archivo:
+            parametros_capacidad_temp = json.load(archivo)
+            for key in parametros_capacidad_temp:
+                clave = eval(key)
+                print(clave)
+                parametros_capacidad[clave] = parametros_capacidad_temp[key]
+    
+    #panel_thread = threading.Thread(target=mi_aplicacion_panel)
+    #panel_thread.start()
+    mi_aplicacion_panel()
+
+
 
 # Programa principal
 # Define directorios
@@ -1164,7 +1367,7 @@ script_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__))
 images_dir = os.path.join(script_dir, 'images')
 # Configuración de la ventana principal
 root = tk.Tk()
-root.title("Tablas para informe RIPSS  Ver.("+version+")")
+root.title("Tablas para informe RIPSS  Ver.("+version+") BETA")
 root.geometry("535x540")
 root.configure(bg="white")
 root.resizable(False, False)
@@ -1363,6 +1566,10 @@ style.map("Custom1.TButton", background=[("active", "#8795de"),("!pressed", "#FF
 
 boton_Hoja1 = ttk.Button(contenedor_hojas, style="Custom1.TButton",text=" Crear libro ", command=crea_libro)
 boton_Hoja1.grid(row=1, column=0,columnspan=4,padx=5,pady=(0,5))
+
+panel_process = None
+boton_setup = ttk.Button(contenedor_hojas, style="Custom1.TButton",text=" Parámetros ", command=parametros)
+boton_setup.grid(row=1, column=2,columnspan=4,padx=5,pady=(0,5))
 
 hint = tk.Label(f_hint, text="Seleccione los archivos para trabajar",font=("Calibri", 9),fg="#8795de",bg="white")
 hint.grid(row=0, column=0, columnspan=2, padx=(5,0))
