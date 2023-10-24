@@ -91,7 +91,7 @@ def update_program():
     global version, download_url
     current_version = version  # Obtener la versión actual de tu programa
     last_version = download_latest_version(download_url,"version.txt")
-    print("Version actual: "+ current_version + " Ultima versión: " + last_version)
+    print("Version actual: "+ str(current_version) + " Ultima versión: " + str(last_version))
     if current_version < last_version:
         boton_actualizar()
         return
@@ -366,9 +366,10 @@ def baja_sirc():
     time.sleep(5)
     btn_consultar = driver.find_element(by="xpath", value='//*[@id="dnn_ctr723_ReporteCensoCamas_btnConsultar"]')
     btn_consultar.click()
-    time.sleep(15)
+    time.sleep(17)
     lnk_exportar = driver.find_element(by="xpath", value='//*[@id="dnn_ctr723_ReporteCensoCamas_LinkButton4"]')
     lnk_exportar.click()
+    time.sleep(5)
     copia_archivo(ruta_downloads, ruta_archivos_recibidos)
     # Close the driver
     driver.quit()
@@ -409,6 +410,7 @@ def archivo_esta_abierto(ruta_archivo):
         return True  # El archivo está abierto por otro proceso
 
 def hay_conexion_internet():
+    return True
     try:
         # Intentar conectarse a un servidor de ejemplo (puedes cambiar el dominio y el puerto)
         socket.create_connection(("prestadores.minsalud.gov.co", 80))
