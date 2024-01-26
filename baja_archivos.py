@@ -25,6 +25,7 @@ from datetime import datetime
 from pathlib import Path
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.styles import PatternFill
 from openpyxl.styles import Font
 from tkinter import PhotoImage
 from tkinter import ttk
@@ -85,14 +86,14 @@ def extrae_ultima_version(url, filename):
                 progress_bar.update(len(data))
             progress_bar.close()
 def boton_actualizar():
-    boton_actualiza = tk.Button(root, text="Actualizar versiónn", command=actualiza)
+    boton_actualiza = tk.Button(root, text="Actualizar versión", command=actualiza)
     boton_actualiza.grid(row=4, column=1,columnspan=1, pady=1)
 def update_program():
     global version, download_url
     current_version = version  # Obtener la versión actual de tu programa
     last_version = download_latest_version(download_url,"version.txt")
     print("Version actual: "+ str(current_version) + " Ultima versión: " + str(last_version))
-    if current_version < last_version:
+    if str(current_version) < str(last_version):
         boton_actualizar()
         return
     else:
